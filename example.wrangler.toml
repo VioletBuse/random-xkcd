@@ -1,0 +1,21 @@
+
+name = "xkcd"
+type = "javascript"
+zone_id = ""
+account_id = ""
+route = ""
+workers_dev = true
+
+
+
+kv_namespaces = [
+    {binding = "DATA", id = "", preview_id = ""}
+]
+
+[triggers]
+crons = ["* * * * *"]
+
+[build]
+command = "npm install && npm run build"
+[build.upload]
+format = "service-worker"
