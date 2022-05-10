@@ -17,6 +17,7 @@ router.get("/", async () => {
     })
 })
 
+/*
 router.get("/scrape", async () => {
     await scrape();
 
@@ -33,6 +34,7 @@ router.get("/scrape/:comic", async ({params}) => {
 
     return new Response("Success")
 })
+*/
 
 router.all("*", () => new Response("NOT FOUND", {status: 404}))
 

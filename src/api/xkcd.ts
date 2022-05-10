@@ -121,6 +121,11 @@ const parseHtmlOfExplainer = async (html: string): Promise<string> => {
         if (srcAttr && srcAttr[0] === "/") {
             tag.attr("src", `https://www.explainxkcd.com${srcAttr}`)
         } 
+
+        const hrefAttr = tag.attr("href")
+        if (hrefAttr && hrefAttr[0] === "/") {
+            tag.attr("href", `https://www.explainxkcd.com${hrefAttr}`)
+        }
     })
 
 

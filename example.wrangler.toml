@@ -6,7 +6,7 @@ account_id = ""
 route = ""
 workers_dev = true
 
-
+usage_model = "unbound"
 
 kv_namespaces = [
     {binding = "DATA", id = "", preview_id = ""}
