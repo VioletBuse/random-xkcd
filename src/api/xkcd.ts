@@ -446,6 +446,9 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
                 url: `https://xkcd.julianbuse.com/${data.num}`,
                 description: data.alt,
                 site_name: "Random XKCD by Julian Buse"
+            },
+            twitter: {
+                card_type: "summary_large_image"
             }
         }
     )
