@@ -442,7 +442,6 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
         {
             opengraph: {
                 title: `${data.num}: ${data.title}`,
-                type: "website",
                 image: data.image,
                 url: `https://xkcd.julianbuse.com/${data.num}`,
                 description: data.alt,

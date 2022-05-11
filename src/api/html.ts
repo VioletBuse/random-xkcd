@@ -8,6 +8,9 @@ type GenerateHtmlOpts = {
         url?: string;
         description?: string;
         site_name?: string;
+    },
+    twitter?: {
+        card_type?: "summary_large_image";
     }
 }
 
@@ -43,6 +46,14 @@ export const generateHtml = async (title: string, style: string, body: string, o
         openGraphMetaTags.push(createMetaTag("og:site_name", openGraphOpts.site_name))
     }
 
+    const twitterEmbedOpts = opts?.twitter;
+
+    const twitterEmbedMetaTags: string[] = [];
+
+    if (twitterEmbedOpts?.card_type) {
+        twitterEmbedMetaTags.push(createMetaTag("twitter:card", twitterEmbedOpts.card_type))
+    }
+
     const normalize = await (await fetch("https://unpkg.com/normalize.css@8.0.1/normalize.css")).text()
 
     const $ = cheerio.load(`
@@ -52,6 +63,7 @@ export const generateHtml = async (title: string, style: string, body: string, o
             <title>${title}</title>
             <meta charset="UTF-8" />
             ${openGraphMetaTags.join("\n")}
+            ${twitterEmbedMetaTags.join("\n")}
             <style>
                 ${normalize}
             </style>
