@@ -313,13 +313,11 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
                     <h3 class="header-sub">by Julian Buse</h3>
                 </div>
                 <br />
-                <br />
                 <div class="comic">
                     <h3 class="comic-title">${data.num}: ${data.title}</h3>
                     <img class="comic-image" src="${data.image}" />
                     <p class="comic-alt">${data.alt}</p>
                 </div>
-                <br />
                 <br />
                 <div class="explanation">
                     <h1 class="explanation-header">Explanation</h1>
