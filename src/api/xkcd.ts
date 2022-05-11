@@ -296,6 +296,12 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
             color: black;
         }
 
+        @media only screen and (min-width: 768px) {
+            .comic-image {
+                width: auto;
+            }
+        }
+
         @media only screen and (min-width: 992px) {
             .random-comic-button {
                 font-size: 25px;
