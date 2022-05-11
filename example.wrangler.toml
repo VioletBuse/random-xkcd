@@ -7,6 +7,7 @@ route = ""
 workers_dev = true
 
 usage_model = "unbound"
+compatibility_date = "2022-05-11"
 
 kv_namespaces = [
     {binding = "DATA", id = "", preview_id = ""}

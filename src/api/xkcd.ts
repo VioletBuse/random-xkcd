@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio"
+import { generateHtml } from "./html";
 
 type XKCDApiResult = {
     num: number;
@@ -11,7 +12,7 @@ type XKCDApiResult = {
 
 const UserAgent = "Explain XKCD Site to Read on Mobile julian@julianbuse.com"
 
-const getXKCDData = async (comic?: number): Promise<XKCDApiResult> => {
+const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
     const url = comic ? `https://xkcd.com/${comic}/info.0.json` : "https://xkcd.com/info.0.json"
 
 
@@ -21,8 +22,14 @@ const getXKCDData = async (comic?: number): Promise<XKCDApiResult> => {
         }
     })
 
-    if (data.status !== 200) {
+    if (data.status !== 200 && data.status !== 404) {
+        console.log("xkcd url: ", url)
+        console.log("xkcd api response: ", await data.text())
         throw new Error("Error fetching data from xkcd api")
+    }
+
+    if (data.status === 404){
+        return null
     }
 
     const jsonData: XKCDApiResult = await data.json()
@@ -30,21 +37,33 @@ const getXKCDData = async (comic?: number): Promise<XKCDApiResult> => {
     return jsonData;
 }
 
-const getMostRecentComicNumber = async (): Promise<number> => {
+const getMostRecentComicNumber = async (): Promise<number | null> => {
     const data = await getXKCDData()
+
+    if (!data) {
+        return null
+    }
 
     return data.num;
 }
 
 
-const getTitleOfComic = async (comic: number): Promise<string> => {
+const getTitleOfComic = async (comic: number): Promise<string | null> => {
     const data = await getXKCDData(comic)
+
+    if (!data) {
+        return null
+    }
 
     return data.safe_title
 }
 
-const getExplainXkcdComicUrl = async (comic: number): Promise<string> => {
+const getExplainXkcdComicUrl = async (comic: number): Promise<string | null> => {
     const safeTitle = await getTitleOfComic(comic)
+
+    if (!safeTitle) {
+        return null
+    }
 
     const titleThing = `${comic}: ${encodeURIComponent(safeTitle)}`.replaceAll("%20", "_")
 
@@ -77,6 +96,10 @@ const getComicToScrape = async (): Promise<number> => {
     const lastScrapedComic = await getMostRecentlyScrapedComic()
     const lastPublishedComic = await getMostRecentComicNumber()
 
+    if (lastPublishedComic === null) {
+        throw new Error("Could not get most recent comic")
+    }
+
     if (lastScrapedComic === null) {
         return 0
     }
@@ -96,6 +119,7 @@ const getRawResponseTextFor = async (url: string): Promise<string | null> => {
     });
 
     if(data.status !== 200 && data.status !== 404) {
+        console.log("error response for url: ", url, " response: ", await data.text())
         throw new Error("Error fetching text: " + url)
     }
 
@@ -133,118 +157,67 @@ const parseHtmlOfExplainer = async (html: string): Promise<string> => {
     return $.html(content)
 }
 
-const createComicPage = async (comic: number): Promise<string | null> => {
+type ComicData = {
+    num: number;
+    title: string;
+    image: string;
+    alt: string;
+    transcription: string;
+    explanation: string;
+}
 
+const createComicData = async (comic: number): Promise<ComicData | null> => {
     const data = await getXKCDData(comic);
 
-    const explainerUrl = await getExplainXkcdComicUrl(comic)
-    const explainerHtml = await getRawResponseTextFor(explainerUrl)
-
-    if (!explainerHtml) {
+    if (!data) {
         return null
     }
 
-    const explainerContent = await parseHtmlOfExplainer(explainerHtml);
+    const explainerUrl = await getExplainXkcdComicUrl(comic)
+    if (!explainerUrl) return null
 
-    const normalize = await getRawResponseTextFor("https://unpkg.com/normalize.css@8.0.1/normalize.css")
+    const explainerHtml = await getRawResponseTextFor(explainerUrl)
 
-    const $ = cheerio.load(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${data.num}: ${data.title}</title>
-            <meta charset="UTF-8" />
-            <style>
-                ${normalize}
-            </style>
-            <style>
-                html, body {
-                    background-color: #212121;
-                    color: #cdcdcd;
-                }
+    const explainerContent = explainerHtml ? await parseHtmlOfExplainer(explainerHtml) : "";
 
-                a:link {
-                    color: #cdcdcd;
-                }
-
-                a:visited {
-                    color: #cdcdcd;
-                }
-
-                .root {
-
-                }
-
-                .header {
-                    padding: 0rem 3rem 0rem 3rem;
-                }
-
-                .main {
-                    width: 100vw;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center; 
-                    flex-direction: column;
-                }
-
-                .main > h4, .main > p {
-                    padding: 0.5rem 3rem 0rem 3rem;
-                }
-
-                .main > img {
-
-                }
-
-                .explanation {
-                    padding: 0rem 3rem 0rem 3rem;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="root">
-                <div class="header">
-                    <h1>Random XKCD by Julian Buse</h1>
-                </div>
-                <div class="main">
-                    <h4>${data.num}: ${data.title}</h4>
-                    <img src=${data.img} />
-                    <p>${data.alt}</p>
-                </div>
-                <br />
-                <br />
-                <div class="explanation">
-                    <h1>Explanation</h1>
-                    ${explainerContent}
-                </div>
-                <br />
-                <br />
-            </div>
-        </body>
-        </html>
-    `)
-
-    return $.html()
+    return {
+        num: data.num,
+        title: data.title,
+        image: data.img,
+        alt: data.alt,
+        transcription: data.transcript,
+        explanation: explainerContent
+    }
 }
 
-const setComicValue = async (comic: number, html: string) => {
-    await DATA.put(`COMIC:${comic}`, html)
+const saveComicData = async (comic: number, data: ComicData) => {
+    await DATA.put("COMIC2:" + comic.toString(), JSON.stringify(data))
 }
 
-export const scrape = async (toScrape?: number) => {
+const getComicData = async (comic: number) => {
+    const data = await DATA.get(`COMIC2:${comic}`, "json") as ComicData | null;
+    return data;
+}
+
+export const scrape = async (toScrape?: number): Promise<ComicData | null> => {
     const comic = toScrape || await getComicToScrape();
-    const page = await createComicPage(comic)
 
-    if (!page) {
-        return setMostRecentlyScrapedComic(comic)
+    const data = await createComicData(comic)
+
+    await setMostRecentlyScrapedComic(comic)
+
+    if (!data) {
+        return null
     }
 
-    await setComicValue(comic, page)
-    await setMostRecentlyScrapedComic(comic)
+    await saveComicData(comic, data)
+
+    return data
 }
 
 const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
     const list = await DATA.list({
-        prefix: "COMIC:",
+        prefix: "COMIC2:",
         cursor: cursor
     });
 
@@ -258,16 +231,103 @@ const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
     }
 }
 
-export const getRandomComicPage = async (): Promise<string | null> => {
-    const comics = await getAllScrapedComics()
+export const getRandomScrapedComic = async (): Promise<number | null> => {
+    const comics = await getAllScrapedComics();
 
     if (comics.length === 0) {
         return null
     }
 
-    const comic = comics[Math.floor(Math.random() * comics.length)]
+    const random = comics[Math.floor(Math.random() * comics.length)]
+    return parseInt(random.replace("COMIC2:", ""))
+}
 
-    const html = await DATA.get(comic);
+export const generateComicPage = async (comic: number): Promise<string | null> => {
+    const data = await getComicData(comic);
 
-    return html;
+    if (!data) {
+        return null
+    }
+
+    return generateHtml(
+        `${data.num}: ${data.title}`,
+        `
+        .main {
+            padding: 3rem;
+            margin-bottom: 17rem;
+        }
+
+        .main-header, .header-sub {
+            margin: 0;
+        }
+
+        .comic-image {
+            width: 100%;
+            height: auto;
+            max-width: 1000px;
+        }
+
+        .random-comic-button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background-image: linear-gradient(0deg, black, black, black, transparent);
+            padding: 3rem;
+            padding-top: 15rem;
+            padding-bottom: 20rem;
+            margin-bottom: -15.5rem;
+            width: 100vw;
+        }
+
+        .random-comic-button {
+            font-size: 50px;
+            background-color: white;
+            color: black;
+            padding: 1rem;
+            text-decoration: none;
+        }
+
+        .random-comic-button:link {
+            color: black;
+        }
+
+        .random-comic-button:visited {
+            color: black;
+        }
+
+        @media only screen and (min-width: 992px) {
+            .random-comic-button {
+                font-size: 25px;
+            }
+
+            .main {
+                margin-bottom: 15rem;
+            }
+        }
+        `,
+        `
+            <div class="main">
+                <div class="header">
+                    <h1 class="main-header">Random XKCD</h1>
+                    <h3 class="header-sub">by Julian Buse</h3>
+                </div>
+                <br />
+                <br />
+                <div class="comic">
+                    <h3 class="comic-title">${data.num}: ${data.title}</h3>
+                    <img class="comic-image" src="${data.image}" />
+                    <p class="comic-alt">${data.alt}</p>
+                </div>
+                <br />
+                <br />
+                <div class="explanation">
+                    <h1 class="explanation-header">Explanation</h1>
+                    ${data.explanation}
+                </div>
+                <div class="random-comic-button-container">
+                    <a class="random-comic-button" href="/">Random Comic</a>
+                </div>
+            </div>
+        `
+    )
 }
