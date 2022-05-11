@@ -1,6 +1,6 @@
 import { Router } from "itty-router"
 import { generateHtml, htmlResponse, internalServerErrorPage, notFoundPage } from "../api/html"
-import { generateComicPage, getExplainXkcdComicUrl, getNextComic, getPreviousComic, getRandomScrapedComic, scrape } from "../api/xkcd"
+import { generateComicPage, getExplainXkcdComicUrl, getNextComic, getPreviousComic, getRandomScrapedComic, getXKCDImage, scrape } from "../api/xkcd"
 
 const router = Router()
 
@@ -10,7 +10,7 @@ router.get("/", async (req) => {
     const url = new URL(req.url)
 
     if (!comic) {
-        return htmlResponse(await notFoundPage(), 404)
+        return htmlResponse(notFoundPage(), 404)
     }
 
     return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
@@ -21,13 +21,13 @@ router.get("/:comic", async (req) => {
     const params = req.params;
 
     if (!params) {
-        return htmlResponse(await internalServerErrorPage(), 500)
+        return htmlResponse(internalServerErrorPage(), 500)
     }
 
     const comic = parseInt(params.comic);
 
     if (!comic || comic !== comic) {
-        return htmlResponse(await notFoundPage(), 404)
+        return htmlResponse(notFoundPage(), 404)
     }
 
     const page = await generateComicPage(comic)
@@ -36,13 +36,35 @@ router.get("/:comic", async (req) => {
         const explainUrl = await getExplainXkcdComicUrl(comic);
 
         if (!explainUrl) {
-            return htmlResponse(await notFoundPage(), 404)
+            return htmlResponse(notFoundPage(), 404)
         }
 
         return Response.redirect(explainUrl)
     }
 
     return htmlResponse(page)
+})
+
+router.get("/:comic/image", async (req) => {
+    const params = req.params;
+
+    if (!params) {
+        return htmlResponse(internalServerErrorPage(), 500)
+    }
+
+    const comic = parseInt(params.comic)
+
+    if (!comic || comic !== comic) {
+        return htmlResponse(notFoundPage(), 404)
+    }
+
+    const response = await getXKCDImage(comic)
+
+    if (!response) {
+        return htmlResponse(notFoundPage(), 404)
+    }
+
+    return response
 })
 
 router.get("/:comic/next", async (req) => {
@@ -55,7 +77,7 @@ router.get("/:comic/next", async (req) => {
     const comic = parseInt(params.comic)
 
     if (!comic || comic !== comic) {
-        return htmlResponse(await notFoundPage(), 404)
+        return htmlResponse(notFoundPage(), 404)
     }
 
     const page = await getNextComic(comic)
@@ -73,13 +95,13 @@ router.get("/:comic/prev", async (req) => {
     const params = req.params;
     
     if (!params) {
-        return htmlResponse(await internalServerErrorPage(), 500)
+        return htmlResponse(internalServerErrorPage(), 500)
     }
 
     const comic = parseInt(params.comic)
 
     if (!comic || comic !== comic) {
-        return htmlResponse(await notFoundPage(), 404)
+        return htmlResponse(notFoundPage(), 404)
     }
 
     const page = await getPreviousComic(comic)

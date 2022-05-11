@@ -13,7 +13,7 @@ type XKCDApiResult = {
   img: string
 }
 
-const UserAgent = 'Explain XKCD Site to Read on Mobile julian@julianbuse.com'
+const UserAgent = 'xkcd.julianbuse.com. Email: julian@julianbuse.com'
 
 const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
   const url = comic
@@ -39,6 +39,24 @@ const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
   const jsonData: XKCDApiResult = await data.json()
 
   return jsonData
+}
+
+export const getXKCDImage = async (comic: number): Promise<Response | null> => {
+    const data = await getComicData(comic);
+    if (!data) {
+        return null;
+    }
+
+    const imageData = await fetch(data.image, {
+        cf: {
+            cacheEverything: true,
+            cacheTtl: 60 * 60 * 24 * 7
+        }
+    })
+
+    const response = new Response(imageData.body, imageData)
+
+    return response;
 }
 
 const getMostRecentComicNumber = async (): Promise<number | null> => {
@@ -454,7 +472,7 @@ export const generateComicPage = async (
                 <br />
                 <div class="comic">
                     <h3 class="comic-title">${data.num}: ${data.title}</h3>
-                    <img class="comic-image" src="${data.image}" />
+                    <img class="comic-image" src="/${data.num}/image" />
                     <p class="comic-alt">${data.alt}</p>
                 </div>
                 <br />
