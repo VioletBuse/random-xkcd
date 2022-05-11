@@ -1,6 +1,6 @@
 import { Router } from "itty-router"
 import { generateHtml, htmlResponse, internalServerErrorPage, notFoundPage } from "../api/html"
-import { generateComicPage, getRandomScrapedComic } from "../api/xkcd"
+import { generateComicPage, getRandomScrapedComic, scrape } from "../api/xkcd"
 
 const router = Router()
 
@@ -42,11 +42,10 @@ router.get("/:comic", async (req) => {
     return htmlResponse(page)
 })
 
-/*
 router.get("/scrape", async () => {
-    const page = await scrape();
+    await scrape();
 
-    return new Response(page)
+    return new Response("Scraped")
 })
 
 router.get("/scrape/:comic", async ({params}) => {
@@ -55,11 +54,10 @@ router.get("/scrape/:comic", async ({params}) => {
         throw new Error()
     }
 
-    const page = await scrape(parseInt((params).comic as string))
+    await scrape(parseInt((params).comic as string))
 
-    return new Response(page)
+    return new Response("Scraped")
 })
-*/
 
 router.all("*", () => new Response("NOT FOUND", {status: 404}))
 

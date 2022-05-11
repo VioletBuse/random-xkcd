@@ -139,7 +139,7 @@ const parseHtmlOfExplainer = async (html: string): Promise<string> => {
 
     $("*", content).each(function(i, elem) {
         const tag = $(this)
-        tag.removeAttr("id class")
+        tag.removeAttr("id class style")
 
         const srcAttr = tag.attr("src")
         if (srcAttr && srcAttr[0] === "/") {
@@ -150,6 +150,7 @@ const parseHtmlOfExplainer = async (html: string): Promise<string> => {
         if (hrefAttr && hrefAttr[0] === "/") {
             tag.attr("href", `https://www.explainxkcd.com${hrefAttr}`)
         }
+
     })
 
 

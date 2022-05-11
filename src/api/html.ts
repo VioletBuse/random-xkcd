@@ -48,6 +48,24 @@ export const generateHtml = async (title: string, style: string, body: string) =
                     font-size: 35px;
                 }
 
+                th {
+                    font-size: 35px;
+                    padding: 10px;
+                }
+
+                td {
+                    font-size: 35px;
+                    padding: 10px;
+                }
+
+                table {
+                    border-collapse: collapse;
+                }
+
+                table, th, td {
+                    border: 1px solid;
+                }
+
                 @media only screen and (min-width: 992px) {
                     h1 {
                         font-size: 30px;
@@ -66,6 +84,14 @@ export const generateHtml = async (title: string, style: string, body: string) =
                     }
 
                     li {
+                        font-size: 18px;
+                    }
+
+                    th {
+                        font-size: 18px;
+                    }
+
+                    td {
                         font-size: 18px;
                     }
                 }
