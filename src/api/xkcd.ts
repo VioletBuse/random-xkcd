@@ -1,5 +1,8 @@
 import * as cheerio from "cheerio"
+import { compareDocumentPosition } from "domutils";
 import { generateHtml } from "./html";
+
+const COMIC_PREFIX = "COMIC3:"
 
 type XKCDApiResult = {
     num: number;
@@ -58,7 +61,7 @@ const getTitleOfComic = async (comic: number): Promise<string | null> => {
     return data.safe_title
 }
 
-const getExplainXkcdComicUrl = async (comic: number): Promise<string | null> => {
+export const getExplainXkcdComicUrl = async (comic: number): Promise<string | null> => {
     const safeTitle = await getTitleOfComic(comic)
 
     if (!safeTitle) {
@@ -142,14 +145,62 @@ const parseHtmlOfExplainer = async (html: string): Promise<string> => {
         tag.removeAttr("id class style")
 
         const srcAttr = tag.attr("src")
-        if (srcAttr && srcAttr[0] === "/") {
+        let srcModified = false;
+
+        //check if this is a link to another comic
+        if (srcAttr && srcAttr.startsWith("/wiki/index.php/")) {
+            const srcReplaced = srcAttr.replace("/wiki/index.php/", "");
+
+            let num = "";
+
+            for (let i = 0; i < srcReplaced.length; i++) {
+                if (parseInt(srcReplaced[i]) === parseInt(srcReplaced[i])){
+                    num += srcReplaced[i]
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+            if (num.length !== 0 && srcReplaced[num.length] === ":") {
+                tag.attr("src", `/${parseInt(num)}`)
+                srcModified = true
+            }
+
+        }
+        
+        if (!srcModified && srcAttr && srcAttr[0] === "/") {
             tag.attr("src", `https://www.explainxkcd.com${srcAttr}`)
         } 
 
         const hrefAttr = tag.attr("href")
-        if (hrefAttr && hrefAttr[0] === "/") {
-            tag.attr("href", `https://www.explainxkcd.com${hrefAttr}`)
+        let hrefModified = false;
+
+        //check if this is a link to another comic
+        if (hrefAttr && hrefAttr.startsWith("/wiki/index.php/")) {
+            const hrefReplaced = hrefAttr.replace("/wiki/index.php/", "");
+
+            let num = "";
+
+            for (let i = 0; i < hrefReplaced.length; i++) {
+                if (parseInt(hrefReplaced[i]) === parseInt(hrefReplaced[i])){
+                    num += hrefReplaced[i]
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+            if (num.length !== 0 && hrefReplaced[num.length] === ":") {
+                tag.attr("href", `/${parseInt(num)}`)
+                hrefModified = true
+            }
+
         }
+        
+        if (!hrefModified && hrefAttr && hrefAttr[0] === "/") {
+            tag.attr("href", `https://www.explainxkcd.com${hrefAttr}`)
+        } 
 
     })
 
@@ -192,11 +243,11 @@ const createComicData = async (comic: number): Promise<ComicData | null> => {
 }
 
 const saveComicData = async (comic: number, data: ComicData) => {
-    await DATA.put("COMIC2:" + comic.toString(), JSON.stringify(data))
+    await DATA.put(COMIC_PREFIX + comic.toString(), JSON.stringify(data))
 }
 
 const getComicData = async (comic: number) => {
-    const data = await DATA.get(`COMIC2:${comic}`, "json") as ComicData | null;
+    const data = await DATA.get(`${COMIC_PREFIX}${comic}`, "json") as ComicData | null;
     return data;
 }
 
@@ -216,9 +267,9 @@ export const scrape = async (toScrape?: number): Promise<ComicData | null> => {
     return data
 }
 
-const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
+const getUnsortedListOfScrapedComics = async (cursor?: string): Promise<string[]> => {
     const list = await DATA.list({
-        prefix: "COMIC2:",
+        prefix: COMIC_PREFIX,
         cursor: cursor
     });
 
@@ -226,10 +277,64 @@ const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
     if (list.list_complete) {
         return keys
     } else {
-        const remainder = await getAllScrapedComics(list.cursor)
+        const remainder = await getUnsortedListOfScrapedComics(list.cursor)
 
         return [...keys, ...remainder]
     }
+}
+
+const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
+    const list = await getUnsortedListOfScrapedComics();
+    const sortedList = list.sort((a,b) => parseInt(a.replace(COMIC_PREFIX, "")) - parseInt(b.replace(COMIC_PREFIX, "")))
+
+    return sortedList
+}
+
+export const getNextComic = async (comic: number): Promise<number | null> => {
+    const list = await getAllScrapedComics();
+
+    const idxOfComic = list.findIndex(key => key.replace(COMIC_PREFIX, "") === comic.toString());
+
+    if (idxOfComic === -1) {
+        return null
+    }
+
+    if (list.length === 1) {
+        return comic
+    }
+
+    if (idxOfComic === list.length - 1) {
+        return parseInt(list[0].replace(COMIC_PREFIX, ""))
+    }
+
+    return parseInt(list[idxOfComic + 1].replace(COMIC_PREFIX, ""))
+}
+
+export const getPreviousComic = async (comic: number): Promise<number | null> => {
+    
+    console.log("get previous comic")
+
+    const list = await getAllScrapedComics()
+
+    console.log("comic list: ", list)
+
+    const idxOfComic = list.findIndex(key => key.replace(COMIC_PREFIX, "") === comic.toString())
+
+    console.log("comic: ", comic, " , idx: ", idxOfComic)
+
+    if (idxOfComic === -1) {
+        return null
+    }
+
+    if (list.length === 1){
+        return comic
+    }
+
+    if (idxOfComic === 0) {
+        return parseInt(list[list.length - 1].replace(COMIC_PREFIX, ""))
+    }
+
+    return parseInt(list[idxOfComic - 1].replace(COMIC_PREFIX, ""))
 }
 
 export const getRandomScrapedComic = async (): Promise<number | null> => {
@@ -240,7 +345,7 @@ export const getRandomScrapedComic = async (): Promise<number | null> => {
     }
 
     const random = comics[Math.floor(Math.random() * comics.length)]
-    return parseInt(random.replace("COMIC2:", ""))
+    return parseInt(random.replace(COMIC_PREFIX, ""))
 }
 
 export const generateComicPage = async (comic: number): Promise<string | null> => {
@@ -325,12 +430,24 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
                 <br />
                 <div class="explanation">
                     <h1 class="explanation-header">Explanation</h1>
-                    ${data.explanation}
+                    ${data.explanation || "<p>No Explanation Available</p>"}
                 </div>
                 <div class="random-comic-button-container">
+                    <a class="random-comic-button" href="/${data.num}/prev">Previous</a>
                     <a class="random-comic-button" href="/">Random Comic</a>
+                    <a class="random-comic-button" href="/${data.num}/next">Next</a>
                 </div>
             </div>
-        `
+        `,
+        {
+            opengraph: {
+                title: `${data.num}: ${data.title}`,
+                type: "website",
+                image: data.image,
+                url: `https://xkcd.julianbuse.com/${data.num}`,
+                description: data.alt,
+                site_name: "Random XKCD by Julian Buse"
+            }
+        }
     )
 }

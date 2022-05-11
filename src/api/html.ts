@@ -1,6 +1,47 @@
 import * as cheerio from 'cheerio';
 
-export const generateHtml = async (title: string, style: string, body: string) => {
+type GenerateHtmlOpts = {
+    opengraph?: {
+        title?: string;
+        type?: "website";
+        image?: string;
+        url?: string;
+        description?: string;
+        site_name?: string;
+    }
+}
+
+const createMetaTag = (property: string, content: string) => `<meta property="${property}" content="${content}" />`;
+
+export const generateHtml = async (title: string, style: string, body: string, opts?: GenerateHtmlOpts) => {
+
+    const openGraphOpts = opts?.opengraph;
+
+    const openGraphMetaTags: string[] = []
+
+    if (openGraphOpts?.title) {
+        openGraphMetaTags.push(createMetaTag("og:title", openGraphOpts.title))
+    }
+
+    if (openGraphOpts?.type) {
+        openGraphMetaTags.push(createMetaTag("og:type", openGraphOpts.type))
+    }
+
+    if (openGraphOpts?.image) {
+        openGraphMetaTags.push(createMetaTag("og:image", openGraphOpts.image))
+    }
+
+    if (openGraphOpts?.url) {
+        openGraphMetaTags.push(createMetaTag("og:url", openGraphOpts.url))
+    }
+
+    if(openGraphOpts?.description) {
+        openGraphMetaTags.push(createMetaTag("og:description", openGraphOpts.description))
+    }
+
+    if (openGraphOpts?.site_name) {
+        openGraphMetaTags.push(createMetaTag("og:site_name", openGraphOpts.site_name))
+    }
 
     const normalize = await (await fetch("https://unpkg.com/normalize.css@8.0.1/normalize.css")).text()
 
@@ -10,6 +51,7 @@ export const generateHtml = async (title: string, style: string, body: string) =
         <head>
             <title>${title}</title>
             <meta charset="UTF-8" />
+            ${openGraphMetaTags.join("\n")}
             <style>
                 ${normalize}
             </style>
@@ -66,6 +108,10 @@ export const generateHtml = async (title: string, style: string, body: string) =
                     border: 1px solid;
                 }
 
+                dd {
+                    font-size: 35px;
+                }
+
                 @media only screen and (min-width: 992px) {
                     h1 {
                         font-size: 30px;
@@ -92,6 +138,10 @@ export const generateHtml = async (title: string, style: string, body: string) =
                     }
 
                     td {
+                        font-size: 18px;
+                    }
+
+                    dd {
                         font-size: 18px;
                     }
                 }
