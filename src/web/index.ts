@@ -1,4 +1,4 @@
-import { getXKCDData, createImageData, scrape } from './../api/xkcd';
+import { getXKCDData, createImageData } from './../api/xkcd';
 import { Router } from "itty-router"
 import { generateHtml, htmlResponse, internalServerErrorPage, notFoundPage } from "../api/html"
 import { generateComicPage, getExplainXkcdComicUrl, getImageData, getNextComic, getPreviousComic, getRandomScrapedComic, } from "../api/xkcd"
@@ -11,8 +11,7 @@ router.get("/", async (req) => {
     const url = new URL(req.url)
 
     if (!comic) {
-        await scrape();
-        return Response.redirect(`${url.protocol}//${url.host}/`)
+        return htmlResponse(notFoundPage(), 404)
     }
 
     return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
