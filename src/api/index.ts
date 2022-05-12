@@ -3,7 +3,6 @@ import { getComicToScrape, getExplainXkcdComicUrl, getRawResponseTextFor, parseH
 const handle = async (event: ScheduledEvent) => {
 
     await scrape()
-    console.log("Scraped...")
     return
 }
 

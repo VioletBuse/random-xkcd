@@ -324,6 +324,8 @@ export const scrape = async (toScrape?: number): Promise<ComicData | null> => {
 
   await saveComicData(comic, data)
 
+  console.log("Scraped: " + comic.toString())
+
   return data
 }
 
@@ -426,14 +428,19 @@ export const getRandomScrapedComic = async (): Promise<number | null> => {
   return parseInt(random.replace(COMIC_PREFIX, ''))
 }
 
-export const generateComicPage = async (
-  comic: number,
-): Promise<string | null> => {
-  const data = await getComicData(comic)
+export const generateComicPage = async (comic: number): Promise<string | null> => {
+    const data = await getComicData(comic)
 
   if (!data) {
     return null
   }
+
+  return generateComicPageFromComicData(data)
+}
+
+export const generateComicPageFromComicData = (
+  data: ComicData,
+): string => {
 
   return generateHtml(
     `${data.num}: ${data.title}`,
@@ -466,7 +473,6 @@ export const generateComicPage = async (
         }
 
         .random-comic-button {
-            font-size: 50px;
             background-color: white;
             color: black;
             padding: 1rem;
@@ -483,7 +489,6 @@ export const generateComicPage = async (
 
         @media only screen and (min-width: 992px) {
             .random-comic-button {
-                font-size: 25px;
             }
 
             .main {
@@ -509,7 +514,6 @@ export const generateComicPage = async (
                 </div>
                 <br />
                 <div class="explanation">
-                    <h1 class="explanation-header">Explanation</h1>
                     ${data.explanation || '<p>No Explanation Available</p>'}
                 </div>
                 <div class="random-comic-button-container">

@@ -1,9 +1,13 @@
-import { getXKCDData, createImageData, scrape } from './../api/xkcd';
+import { getXKCDData, createImageData, scrape, generateComicPageFromComicData } from './../api/xkcd';
 import { Router } from "itty-router"
-import { generateHtml, htmlResponse, internalServerErrorPage, notFoundPage } from "../api/html"
+import { generateHtml, htmlResponse, htmlTestPage, internalServerErrorPage, notFoundPage } from "../api/html"
 import { generateComicPage, getExplainXkcdComicUrl, getImageData, getNextComic, getPreviousComic, getRandomScrapedComic, } from "../api/xkcd"
 
 const router = Router()
+
+router.get("/css-test", async () => {
+    return htmlResponse(htmlTestPage())
+})
 
 router.get("/", async (req) => {
     const comic = await getRandomScrapedComic()
@@ -11,8 +15,15 @@ router.get("/", async (req) => {
     const url = new URL(req.url)
 
     if (!comic) {
-        await scrape()
-        return Response.redirect(`${url.protocol}//${url.host}/`)
+        const data = await scrape()
+
+        if (data) {
+            const html = generateComicPageFromComicData(data)
+
+            return htmlResponse(html)
+        }
+
+        return htmlResponse(notFoundPage(), 404)
     }
 
     return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
@@ -35,13 +46,17 @@ router.get("/:comic", async (req) => {
     const page = await generateComicPage(comic)
 
     if (!page) {
-        const explainUrl = await getExplainXkcdComicUrl(comic);
 
-        if (!explainUrl) {
+        const data = await scrape(comic)
+
+
+        if (!data) {
             return htmlResponse(notFoundPage(), 404)
         }
 
-        return Response.redirect(explainUrl)
+        const pageHtml = generateComicPageFromComicData(data)
+
+        return htmlResponse(pageHtml)
     }
 
     return htmlResponse(page)
@@ -169,7 +184,7 @@ router.get("/scrape/:comic", async ({params}) => {
 })
 */
 
-router.all("*", () => new Response("NOT FOUND", {status: 404}))
+router.all("*", () => htmlResponse(notFoundPage(), 404))
 
 const handle = async (event: FetchEvent): Promise<Response> => {
     return router.handle(event.request)
