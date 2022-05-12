@@ -477,6 +477,7 @@ export const generateComicPageFromComicData = (
             color: black;
             padding: 1rem;
             text-decoration: none;
+            font-size: 5rem;
         }
 
         .random-comic-button:link {
@@ -489,6 +490,7 @@ export const generateComicPageFromComicData = (
 
         @media only screen and (min-width: 992px) {
             .random-comic-button {
+                font-size: 3.1rem;
             }
 
             .main {
