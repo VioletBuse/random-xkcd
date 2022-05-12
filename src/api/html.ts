@@ -435,7 +435,6 @@ export const generateHtml = (
                 }
 
                 html {
-                  font-size: 62.5%;
                 }
 
                 a:link {
