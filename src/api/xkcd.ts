@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { compareDocumentPosition } from 'domutils'
 import { generateHtml } from './html'
 
-const COMIC_PREFIX = 'COMIC4:'
+const COMIC_PREFIX = 'COMIC5:'
 
 type XKCDApiResult = {
   num: number
@@ -15,7 +15,7 @@ type XKCDApiResult = {
 
 const UserAgent = 'xkcd.julianbuse.com. Email: julian@julianbuse.com'
 
-const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
+export const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
   const url = comic
     ? `https://xkcd.com/${comic}/info.0.json`
     : 'https://xkcd.com/info.0.json'
@@ -41,6 +41,7 @@ const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
   return jsonData
 }
 
+/*
 export const getXKCDImage = async (comic: number): Promise<Response | null> => {
     const data = await getComicData(comic);
     if (!data) {
@@ -58,6 +59,7 @@ export const getXKCDImage = async (comic: number): Promise<Response | null> => {
 
     return response;
 }
+*/
 
 const getMostRecentComicNumber = async (): Promise<number | null> => {
   const data = await getXKCDData()
@@ -118,7 +120,7 @@ const setMostRecentlyScrapedComic = async (item: number) => {
   await DATA.put('MOST_RECENTLY_SCRAPED', item.toString())
 }
 
-const getComicToScrape = async (): Promise<number> => {
+export const getComicToScrape = async (): Promise<number> => {
   const lastScrapedComic = await getMostRecentlyScrapedComic()
   const lastPublishedComic = await getMostRecentComicNumber()
 
@@ -137,7 +139,7 @@ const getComicToScrape = async (): Promise<number> => {
   return lastScrapedComic + 1
 }
 
-const getRawResponseTextFor = async (url: string): Promise<string | null> => {
+export const getRawResponseTextFor = async (url: string): Promise<string | null> => {
   const data = await fetch(url, {
     headers: {
       'User-Agent': UserAgent,
@@ -163,10 +165,10 @@ const getRawResponseTextFor = async (url: string): Promise<string | null> => {
   return html
 }
 
-const parseHtmlOfExplainer = async (html: string): Promise<string> => {
+export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
   const $ = cheerio.load(html)
 
-  const content = $('span#Explanation').parent().nextUntil('h2')
+  const content = $('div.mw-parser-output > table').nextUntil("span#Discussion")
 
   $('*', content).each(function (i, elem) {
     const tag = $(this)
@@ -241,6 +243,47 @@ type ComicData = {
   explanation: string
 }
 
+export const createImageData = async (url: string, id: string): Promise<string> => {
+    const imageResponse = await fetch(url, {
+        cf: {
+            cacheEverything: true,
+            cacheTtl: 60 * 5
+        }
+    });
+
+    const imageStream = imageResponse.body;
+
+    if (!imageStream) {
+        throw new Error("No Image Stream")
+    }
+
+    const headers: {[key: string]: string} = {}
+
+    imageResponse.headers.forEach((val, key) => {
+        headers[key] = val;
+    })
+
+    console.log("headers: ", headers)
+
+    await DATA.put(`${COMIC_PREFIX.replace(":", "_IMAGES:")}${id}`, imageStream)
+    await DATA.put(`${COMIC_PREFIX.replace(":", "_IMAGE_HEADERS:")}${id}`, JSON.stringify(headers))
+
+    return id
+}
+
+export const getImageData = async (id: string): Promise<Response | null> => {
+    const imageStream = await DATA.get(`${COMIC_PREFIX.replace(":", "_IMAGES:")}${id}`, "stream");
+    const imageHeaders: {[key: string]: string} | null = await DATA.get(`${COMIC_PREFIX.replace(":", "_IMAGE_HEADERS:")}${id}`, "json");
+
+    if (!imageStream || !imageHeaders) {
+        return null
+    }
+
+    return new Response(imageStream, {
+        headers: imageHeaders
+    })
+}
+
 const createComicData = async (comic: number): Promise<ComicData | null> => {
   const data = await getXKCDData(comic)
 
@@ -257,10 +300,12 @@ const createComicData = async (comic: number): Promise<ComicData | null> => {
     ? await parseHtmlOfExplainer(explainerHtml)
     : ''
 
+  const imageId = await createImageData(data.img, comic.toString());
+
   return {
     num: data.num,
     title: data.title,
-    image: data.img,
+    image: `/images/${comic}`,
     alt: data.alt,
     transcription: data.transcript,
     explanation: explainerContent,
@@ -472,7 +517,7 @@ export const generateComicPage = async (
                 <br />
                 <div class="comic">
                     <h3 class="comic-title">${data.num}: ${data.title}</h3>
-                    <img class="comic-image" src="/${data.num}/image" />
+                    <img class="comic-image" src="${data.image}" />
                     <p class="comic-alt">${data.alt}</p>
                 </div>
                 <br />

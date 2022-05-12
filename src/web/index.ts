@@ -1,6 +1,7 @@
+import { getXKCDData, createImageData } from './../api/xkcd';
 import { Router } from "itty-router"
 import { generateHtml, htmlResponse, internalServerErrorPage, notFoundPage } from "../api/html"
-import { generateComicPage, getExplainXkcdComicUrl, getNextComic, getPreviousComic, getRandomScrapedComic, getXKCDImage, scrape } from "../api/xkcd"
+import { generateComicPage, getExplainXkcdComicUrl, getImageData, getNextComic, getPreviousComic, getRandomScrapedComic, } from "../api/xkcd"
 
 const router = Router()
 
@@ -45,6 +46,38 @@ router.get("/:comic", async (req) => {
     return htmlResponse(page)
 })
 
+router.get("/images/:comic", async (req) => {
+    const params = req.params;
+
+    if (!params) {
+        return htmlResponse(internalServerErrorPage(), 500)
+    }
+
+    const comic = parseInt(params.comic);
+
+    if (!comic || comic !== comic) {
+        return htmlResponse(notFoundPage(), 404)
+    }
+
+    const imageRes = await getImageData(comic.toString())
+
+    if (imageRes !== null) {
+        return imageRes
+    }
+
+    const xkcdData = await getXKCDData(comic)
+    
+    if (!xkcdData) {
+        return htmlResponse(notFoundPage(), 404)
+    }
+
+    const id = await createImageData(xkcdData.img, comic.toString());
+    const response = await fetch(xkcdData.img);
+
+    return response;
+})
+
+/*
 router.get("/:comic/image", async (req) => {
     const params = req.params;
 
@@ -66,6 +99,7 @@ router.get("/:comic/image", async (req) => {
 
     return response
 })
+*/
 
 router.get("/:comic/next", async (req) => {
     const params = req.params;
