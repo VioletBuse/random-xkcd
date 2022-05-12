@@ -84,20 +84,7 @@ const getTitleOfComic = async (comic: number): Promise<string | null> => {
 export const getExplainXkcdComicUrl = async (
   comic: number,
 ): Promise<string | null> => {
-  const safeTitle = await getTitleOfComic(comic)
-
-  if (!safeTitle) {
-    return null
-  }
-
-  const titleThing = `${comic}: ${encodeURIComponent(safeTitle)}`.replaceAll(
-    '%20',
-    '_',
-  )
-
-  const spacesRemoved = titleThing.replaceAll(' ', '_')
-
-  return `https://www.explainxkcd.com/wiki/index.php/${spacesRemoved}`
+  return `https://www.explainxkcd.com/wiki/index.php/${comic}`
 }
 
 const getMostRecentlyScrapedComic = async (): Promise<number | null> => {
