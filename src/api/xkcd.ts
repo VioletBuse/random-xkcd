@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { compareDocumentPosition } from 'domutils'
 import { generateHtml } from './html'
 
-const COMIC_PREFIX = 'COMIC6:'
+const COMIC_PREFIX = 'COMIC7:'
 
 type XKCDApiResult = {
   num: number
