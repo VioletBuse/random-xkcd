@@ -434,6 +434,11 @@ export const generateHtml = (
                     font-family: monospace;
                 }
 
+                svg {
+                  color: #cdcdcd;
+                  fill: #cdcdcd;
+                }
+
                 html {
                 }
 

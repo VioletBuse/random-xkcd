@@ -1,39 +1,23 @@
-# ʕ •́؈•̀) `worker-typescript-template`
+# Random XKCD
 
-A batteries included template for kick starting a TypeScript Cloudflare worker project.
+## About
 
-## Note: You must use [wrangler](https://developers.cloudflare.com/workers/cli-wrangler/install-update) 1.17 or newer to use this template.
+[Random XKCD](https://xkcd.julianbuse.com) is a site that allows me to read xkcd comics, and [explanations](https://www.explainxkcd.com) of them, on my phone. I used to read them on [explain xkcd](https://www.explainxkcd.com), but the site isn't optimized for mobile, and I wanted to be able to read them on-the-go. To do this I created a site with cloudflare workers to grab that data, and store it.
 
-## 🔋 Getting Started
+## How it works
 
-This template is meant to be used with [Wrangler](https://github.com/cloudflare/wrangler). If you are not already familiar with the tool, we recommend that you install the tool and configure it to work with your [Cloudflare account](https://dash.cloudflare.com). Documentation can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler/).
+There are two parts to this project: a __scraper__ and a __renderer__. 
 
-To generate using Wrangler, run this command:
+### The Scraper:
 
-```bash
-wrangler generate my-ts-project https://github.com/cloudflare/worker-typescript-template
-```
+The scraper has an index of all comics, and scrapes at a rate of one comic per minute. This means that at the current count, the index gets fully refreshed every two days. It first makes a request to https://xkcd.com/info.0.json, which returns data on the most recent comic. This allows me to cache the image, by downloading it, and then storing the image in KV, which allows me to serve it quite quickly. It then compares the number of the most recent comic with the number of the most recently scraped comic, and if they are the same, loops back around. 
 
-### 👩 💻 Developing
+The scraper then takes the number of the comic to be scraped, and queries the site explainxkcd.com for it. It grabs the html of the explanation and transcript, removes some stuff (such as notices that are relevant to the wiki), and makes things like tables behave better. This html is saved alongside some other data about the comic in cloudflare workers KV.
 
-[`src/index.ts`](./src/index.ts) calls the request handler in [`src/handler.ts`](./src/handler.ts), and will return the [request method](https://developer.mozilla.org/en-US/docs/Web/API/Request/method) for the given request.
+### The Renderer:
 
-### 🧪 Testing
+The renderer queries KV for a list of all the comics that have already been scraped. It picks one at random, and renders it using a template. This gets returned to the user. This bit is quite simple, and just makes the data look pretty. Everything is cached in KV, so none of the requests hit the origin, which should in theory allow me to improve the loading times of assets.
 
-This template comes with jest tests which simply test that the request handler can handle each request method. `npm test` will run your tests.
+## TODO
 
-### ✏️ Formatting
-
-This template uses [`prettier`](https://prettier.io/) to format the project. To invoke, run `npm run format`.
-
-### 👀 Previewing and Publishing
-
-For information on how to preview and publish your worker, please see the [Wrangler docs](https://developers.cloudflare.com/workers/tooling/wrangler/commands/#publish).
-
-## 🤢 Issues
-
-If you run into issues with this specific project, please feel free to file an issue [here](https://github.com/cloudflare/worker-typescript-template/issues). If the problem is with Wrangler, please file an issue [here](https://github.com/cloudflare/wrangler/issues).
-
-## ⚠️ Caveats
-
-The `service-worker-mock` used by the tests is not a perfect representation of the Cloudflare Workers runtime. It is a general approximation. We recommend that you test end to end with `wrangler dev` in addition to a [staging environment](https://developers.cloudflare.com/workers/tooling/wrangler/configuration/environments/) to test things before deploying.
+The webpage feels slow to use, even though testing it shows consistent sub 200-millisecond loads for the main page, and less when it is cached. I will probably spend some more time doing performance tuning.
