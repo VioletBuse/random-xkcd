@@ -29,8 +29,6 @@ export const getXKCDData = async (
   })
 
   if (data.status !== 200 && data.status !== 404) {
-    console.log('xkcd url: ', url)
-    console.log('xkcd api response: ', await data.text())
     throw new Error('Error fetching data from xkcd api')
   }
 
@@ -167,8 +165,6 @@ export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
       table.remove()
       return;
     }
-
-    console.log("remaining table: ", $.html(table).substring(0, 100))
 
     if (tblclass?.includes("wikitable")) {
       table.wrap('<div style="overflow-x: auto;"></div>')
