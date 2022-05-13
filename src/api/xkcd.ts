@@ -480,7 +480,7 @@ export const generateComicPageFromComicData = (data: ComicData): string => {
     `${data.num}: ${data.title}`,
     `
         .main {
-            padding-left: 3rem;
+            padding: 3rem;
             margin-bottom: 17rem;
         }
 
