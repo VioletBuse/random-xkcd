@@ -500,8 +500,8 @@ export const generateComicPageFromComicData = (data: ComicData): string => {
         }
 
         .github-logo {
-          height: 3rem;
-          width: 3rem;
+          height: 6.5rem;
+          width: 6.5rem;
         }
 
         .github-logo:hover {
@@ -544,6 +544,11 @@ export const generateComicPageFromComicData = (data: ComicData): string => {
         }
 
         @media only screen and (min-width: 992px) {
+
+          .github-logo {
+            width: 3rem;
+            height: 3rem;
+          }
 
             .random-comic-button-container {
 
