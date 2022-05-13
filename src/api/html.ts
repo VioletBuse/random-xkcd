@@ -489,11 +489,11 @@ export const generateHtml = (
                 @media only screen and (min-width: 992px) {
 
                   h1 {
-                    font-size: 2rem;
+                    font-size: 1.75rem;
                   }
 
                   h2 {
-                    font-size: 1.8rem;
+                    font-size: 1.70rem;
                   }
 
                   h3 {
@@ -505,15 +505,15 @@ export const generateHtml = (
                   }
 
                   h5 {
-                    font-size: 1.35rem;
+                    font-size: 1.4rem;
                   }
 
                   h6 {
-                    font-size: 1.2rem;
+                    font-size: 1.3rem;
                   }
 
                   p, li, a, dt, dl, summary, address, th, td, caption, pre {
-                    font-size: 1.2rem;
+                    font-size: 1.3rem;
                   }
                 }
 

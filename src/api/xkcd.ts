@@ -489,6 +489,11 @@ export const generateComicPageFromComicData = (
         }
 
         @media only screen and (min-width: 992px) {
+
+            .random-comic-button-container {
+
+            }
+
             .random-comic-button {
                 font-size: 1.6rem;
             }
