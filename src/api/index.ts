@@ -2,7 +2,7 @@ import { getComicToScrape, getExplainXkcdComicUrl, getRawResponseTextFor, parseH
 
 const handle = async (event: ScheduledEvent) => {
 
-    await scrape()
+    await scrape(2288)
     return
 }
 

@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio'
-import { compareDocumentPosition } from 'domutils'
+import * as htmlparser2 from 'htmlparser2'
 import { generateHtml } from './html'
 
 const COMIC_PREFIX = 'COMIC7:'
@@ -15,7 +15,9 @@ type XKCDApiResult = {
 
 const UserAgent = 'xkcd.julianbuse.com. Email: julian@julianbuse.com'
 
-export const getXKCDData = async (comic?: number): Promise<XKCDApiResult | null> => {
+export const getXKCDData = async (
+  comic?: number,
+): Promise<XKCDApiResult | null> => {
   const url = comic
     ? `https://xkcd.com/${comic}/info.0.json`
     : 'https://xkcd.com/info.0.json'
@@ -126,7 +128,9 @@ export const getComicToScrape = async (): Promise<number> => {
   return lastScrapedComic + 1
 }
 
-export const getRawResponseTextFor = async (url: string): Promise<string | null> => {
+export const getRawResponseTextFor = async (
+  url: string,
+): Promise<string | null> => {
   const data = await fetch(url, {
     headers: {
       'User-Agent': UserAgent,
@@ -155,11 +159,31 @@ export const getRawResponseTextFor = async (url: string): Promise<string | null>
 export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
   const $ = cheerio.load(html)
 
-  const content = $('div.mw-parser-output > table').nextUntil("span#Discussion")
+  $('table').each(function (i, elem) {
+    const table = $(this)
+    const tblclass = table.attr("class");
+
+    if (tblclass?.includes("notice")) {
+      table.remove()
+      return;
+    }
+
+    console.log("remaining table: ", $.html(table).substring(0, 100))
+
+    if (tblclass?.includes("wikitable")) {
+      table.wrap('<div style="overflow-x: auto;"></div>')
+      return
+    }
+  })
+
+  const content = $('div.mw-parser-output > table').nextUntil('span#Discussion')
 
   $('*', content).each(function (i, elem) {
+
     const tag = $(this)
-    tag.removeAttr('id class style')
+    tag.removeAttr('id')
+    tag.removeAttr('class')
+    tag.removeAttr('style')
 
     const srcAttr = tag.attr('src')
     let srcModified = false
@@ -187,6 +211,24 @@ export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
 
     if (!srcModified && srcAttr && srcAttr[0] === '/') {
       tag.attr('src', `https://www.explainxkcd.com${srcAttr}`)
+    }
+
+    const scrsetAttr = tag.attr('srcset')
+
+    if (typeof scrsetAttr === 'string' && scrsetAttr) {
+      const srcSets = scrsetAttr.split(',').map((rawSet) => rawSet.trim())
+
+      const finalSrcSets: string[] = []
+
+      srcSets.forEach((set) => {
+        if (set[0] === '/') {
+          finalSrcSets.push(`https://www.explainxkcd.com${set}`)
+        } else {
+          finalSrcSets.push(set)
+        }
+      })
+
+      tag.attr('srcset', finalSrcSets.join(', '))
     }
 
     const hrefAttr = tag.attr('href')
@@ -230,45 +272,55 @@ type ComicData = {
   explanation: string
 }
 
-export const createImageData = async (url: string, id: string): Promise<string> => {
-    const imageResponse = await fetch(url, {
-        cf: {
-            cacheEverything: true,
-            cacheTtl: 60 * 5
-        }
-    });
+export const createImageData = async (
+  url: string,
+  id: string,
+): Promise<string> => {
+  const imageResponse = await fetch(url, {
+    cf: {
+      cacheEverything: true,
+      cacheTtl: 60 * 5,
+    },
+  })
 
-    const imageStream = imageResponse.body;
+  const imageStream = imageResponse.body
 
-    if (!imageStream) {
-        throw new Error("No Image Stream")
-    }
+  if (!imageStream) {
+    throw new Error('No Image Stream')
+  }
 
-    const headers: {[key: string]: string} = {}
+  const headers: { [key: string]: string } = {}
 
-    imageResponse.headers.forEach((val, key) => {
-        headers[key] = val;
-    })
+  imageResponse.headers.forEach((val, key) => {
+    headers[key] = val
+  })
 
-    console.log("headers: ", headers)
+  await DATA.put(`${COMIC_PREFIX.replace(':', '_IMAGES:')}${id}`, imageStream)
+  await DATA.put(
+    `${COMIC_PREFIX.replace(':', '_IMAGE_HEADERS:')}${id}`,
+    JSON.stringify(headers),
+  )
 
-    await DATA.put(`${COMIC_PREFIX.replace(":", "_IMAGES:")}${id}`, imageStream)
-    await DATA.put(`${COMIC_PREFIX.replace(":", "_IMAGE_HEADERS:")}${id}`, JSON.stringify(headers))
-
-    return id
+  return id
 }
 
 export const getImageData = async (id: string): Promise<Response | null> => {
-    const imageStream = await DATA.get(`${COMIC_PREFIX.replace(":", "_IMAGES:")}${id}`, "stream");
-    const imageHeaders: {[key: string]: string} | null = await DATA.get(`${COMIC_PREFIX.replace(":", "_IMAGE_HEADERS:")}${id}`, "json");
+  const imageStream = await DATA.get(
+    `${COMIC_PREFIX.replace(':', '_IMAGES:')}${id}`,
+    'stream',
+  )
+  const imageHeaders: { [key: string]: string } | null = await DATA.get(
+    `${COMIC_PREFIX.replace(':', '_IMAGE_HEADERS:')}${id}`,
+    'json',
+  )
 
-    if (!imageStream || !imageHeaders) {
-        return null
-    }
+  if (!imageStream || !imageHeaders) {
+    return null
+  }
 
-    return new Response(imageStream, {
-        headers: imageHeaders
-    })
+  return new Response(imageStream, {
+    headers: imageHeaders,
+  })
 }
 
 const createComicData = async (comic: number): Promise<ComicData | null> => {
@@ -287,7 +339,7 @@ const createComicData = async (comic: number): Promise<ComicData | null> => {
     ? await parseHtmlOfExplainer(explainerHtml)
     : ''
 
-  const imageId = await createImageData(data.img, comic.toString());
+  const imageId = await createImageData(data.img, comic.toString())
 
   return {
     num: data.num,
@@ -324,7 +376,7 @@ export const scrape = async (toScrape?: number): Promise<ComicData | null> => {
 
   await saveComicData(comic, data)
 
-  console.log("Scraped: " + comic.toString())
+  console.log('Scraped: ' + comic.toString())
 
   return data
 }
@@ -359,16 +411,11 @@ const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
 }
 
 export const getNextComic = async (comic: number): Promise<number | null> => {
-  console.log('fn:getNextComic')
   const list = await getAllScrapedComics()
-  console.log('list: ', list)
 
   const idxOfComic = list.findIndex(
     (key) => key.replace(COMIC_PREFIX, '') === comic.toString(),
   )
-
-  console.log("comic nr: ", comic)
-  console.log("comic idx: ", idxOfComic)
 
   if (idxOfComic === -1) {
     return null
@@ -388,18 +435,11 @@ export const getNextComic = async (comic: number): Promise<number | null> => {
 export const getPreviousComic = async (
   comic: number,
 ): Promise<number | null> => {
-  console.log('fn:getPreviousComic')
-
   const list = await getAllScrapedComics()
-
-  console.log('list: ', list)
 
   const idxOfComic = list.findIndex(
     (key) => key.replace(COMIC_PREFIX, '') === comic.toString(),
   )
-
-  console.log("comic nr: ", comic)
-  console.log("comic idx: ", idxOfComic)
 
   if (idxOfComic === -1) {
     return null
@@ -410,7 +450,6 @@ export const getPreviousComic = async (
   }
 
   if (idxOfComic === 0) {
-      console.log("this is the first comic")
     return parseInt(list[list.length - 1].replace(COMIC_PREFIX, ''))
   }
 
@@ -428,8 +467,10 @@ export const getRandomScrapedComic = async (): Promise<number | null> => {
   return parseInt(random.replace(COMIC_PREFIX, ''))
 }
 
-export const generateComicPage = async (comic: number): Promise<string | null> => {
-    const data = await getComicData(comic)
+export const generateComicPage = async (
+  comic: number,
+): Promise<string | null> => {
+  const data = await getComicData(comic)
 
   if (!data) {
     return null
@@ -438,15 +479,12 @@ export const generateComicPage = async (comic: number): Promise<string | null> =
   return generateComicPageFromComicData(data)
 }
 
-export const generateComicPageFromComicData = (
-  data: ComicData,
-): string => {
-
+export const generateComicPageFromComicData = (data: ComicData): string => {
   return generateHtml(
     `${data.num}: ${data.title}`,
     `
         .main {
-            padding: 3rem;
+            padding-left: 3rem;
             margin-bottom: 17rem;
         }
 
@@ -464,6 +502,7 @@ export const generateComicPageFromComicData = (
             position: fixed;
             bottom: 0;
             left: 0;
+            right: 0;
             background-image: linear-gradient(0deg, black, black, black, transparent);
             padding: 3rem;
             padding-top: 15rem;

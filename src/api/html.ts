@@ -437,6 +437,15 @@ export const generateHtml = (
                 html {
                 }
 
+                body {
+                  overflow-x: hidden;
+                  width: 100vw;
+                }
+
+                img {
+                  max-width: 100vw;
+                }
+
                 a:link {
                     color: #cdcdcd;
                 }
@@ -447,7 +456,7 @@ export const generateHtml = (
 
                 table {
                   border-collapse: collapse;
-                  overflow-x: auto;
+                  /*overflow-x: auto;*/
                 }
 
                 table, td, th {
@@ -484,6 +493,10 @@ export const generateHtml = (
 
                 p, li, a, dt, dl, summary, address, th, td, caption, pre {
                   font-size: 3rem;
+                }
+
+                h1, h2, h3, h4, h5, h6, p, li, a, dt, dl, summary, address, th, td, caption, pre {
+                  overflow-wrap: break-word;
                 }
 
                 @media only screen and (min-width: 992px) {
