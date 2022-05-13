@@ -452,7 +452,7 @@ export const getPreviousComic = async (
 }
 
 export const getRandomScrapedComic = async (): Promise<number | null> => {
-  const comics = await getAllScrapedComics()
+  const comics = await getUnsortedListOfScrapedComics()
 
   if (comics.length === 0) {
     return null

@@ -20,4 +20,4 @@ The renderer queries KV for a list of all the comics that have already been scra
 
 ## TODO
 
-The webpage feels slow to use, even though testing it shows consistent sub 200-millisecond loads for the main page, and less when it is cached. I will probably spend some more time doing performance tuning.
+The webpage feels slow to use. I have some caching, so when reloading it's done in about 200 to 300 milliseconds, but without I have seen highs of 900ms when looking for a random comic.
