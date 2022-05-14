@@ -504,6 +504,11 @@ export const generateHtml = (
                   overflow-wrap: break-word;
                 }
 
+                pre {
+                  white-space: pre-wrap;
+                  /*overflow-x: auto;*/
+                }
+
                 @media only screen and (min-width: 992px) {
 
                   h1 {
