@@ -18,6 +18,7 @@ import { renderComponent } from './react'
 const app = new Hono()
 
 app.get('/', async (c) => {
+
   const comic = await getRandomScrapedComic()
 
   if (!comic) {
@@ -43,7 +44,6 @@ app.get('/:comic', async (c) => {
   let comicData = await getComicData(comic)
 
   if (!comicData) {
-    console.log('comic data not present: scraping')
 
     const data = await scrape(comic)
 
@@ -132,10 +132,13 @@ app.get('/error500', async (c) => {
   return c.html(html)
 })
 
-app.onError((err, c) => c.redirect('/error500'))
+app.onError((err, c) => {
+  console.error("Internal Server Error: ", err.message)
+  return c.redirect('/error500')
+})
 
 app.notFound((c) => c.redirect('/error404'))
 
-const ApiRequestApp = app
+const HonoApp = app
 
-export default ApiRequestApp
+export default HonoApp

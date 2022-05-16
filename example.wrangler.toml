@@ -1,10 +1,8 @@
-
 name = "xkcd"
-type = "javascript"
-zone_id = ""
 account_id = ""
-route = ""
+route = "someroute.com/*"
 workers_dev = true
+main = "./dist/index.js"
 
 usage_model = "unbound"
 compatibility_date = "2022-05-11"
@@ -17,6 +15,7 @@ kv_namespaces = [
 crons = ["* * * * *"]
 
 [build]
-command = "npm install && npm run build"
-[build.upload]
-format = "service-worker"
+command = "npm run build"
+
+[site]
+bucket = "./static"

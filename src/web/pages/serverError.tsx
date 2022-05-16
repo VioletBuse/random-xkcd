@@ -1,12 +1,9 @@
-import React from "react"
-import { Helmet } from "react-helmet"
+import React from 'react'
 
 export const ServerErrorPage = () => {
-
-    return <div>
-        <Helmet>
-            <title>Internal Server Error</title>
-        </Helmet>
-        <h1>Internal Server Error</h1>
+  return (
+    <div>
+      <h1>Internal Server Error</h1>
     </div>
+  )
 }

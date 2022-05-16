@@ -1,22 +1,14 @@
 import React, { useEffect } from 'react'
-import { Helmet } from 'react-helmet'
 import { ComicData } from '../../api/xkcd'
 
 export const MainComicPage = (props: ComicData) => {
+
+  useEffect(() => {
+    document.title = `${props.num}: ${props.title}`
+  }, [])
+
   return (
     <div className="main-comic-page">
-      <Helmet>
-        <title>
-          {props.num}: {props.title}
-        </title>
-        <meta property="og:title" content={props.title} />
-        <meta property='og:type' content="website" />
-        <meta property='og:image' content={`https://xkcd.julianbuse.com/images/${props.num}`} />
-        <meta property='og:url' content={`https://xkcd.julianbuse.com/${props.num}`} />
-        <meta property='og:description' content={props.alt} />
-        <meta property='og:site_name' content='Random XKCD' />
-        <meta property='twitter:card' content='summary_large_image' />
-      </Helmet>
       <div className="comic-header-container">
         <div className="left">
           <div className="name">

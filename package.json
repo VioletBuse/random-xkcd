@@ -4,14 +4,13 @@
   "description": "Cloudflare worker TypeScript template",
   "main": "dist/worker.js",
   "scripts": {
-    "build:js": "esbuild --minify --bundle --sourcemap src/index.ts --outfile=dist/index.js",
+    "build:js": "esbuild --minify --bundle --sourcemap --outfile=./dist/index.js src/index.ts",
     "build:css": "sass ./src/scss/index.scss ./css/index.css",
-    "build:delete": "rimraf dist css static",
-    "build:copy:static": "mkdir static && cd static && mkdir static && cd .. && cp -a ./dist/. ./static/static/ && cp -a ./css/. ./static/static/ && cp -a ./favicons/. ./static/static && cp ./normalize.css ./static/static/normalize.css",
+    "build:delete": "rimraf dist css static && mkdir static && cd static && mkdir static && cd ..",
+    "build:copy:static": "cp -a ./dist/ ./static/static/ && cp -a ./css/. ./static/static/ && cp -a ./favicons/. ./static/static && cp ./normalize.css ./static/static/normalize.css",
     "build": "npm run build:delete && npm run build:js && npm run build:css && npm run build:copy:static",
     "format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
-    "test": "jest --config jestconfig.json --verbose",
     "dev": "wrangler dev -l",
     "scheduled": "curl \"http://localhost:8787/cdn-cgi/mf/scheduled?cron=*+*+*+*+*\""
   },
@@ -29,7 +28,6 @@
     "@types/jest": "^26.0.23",
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.4",
-    "@types/react-helmet": "^6.1.5",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
@@ -55,7 +53,6 @@
     "htmlparser2": "^8.0.1",
     "itty-router": "^2.6.1",
     "react": "^18.1.0",
-    "react-dom": "^18.1.0",
-    "react-helmet": "^6.1.0"
+    "react-dom": "^18.1.0"
   }
 }

@@ -1,16 +1,14 @@
 import ScheduledEventHandler from "./api"
-import ApiRequestApp from "./web"
+import HonoApp from "./web";
 
 declare global {
   const DATA: KVNamespace;
   interface Window {
-    __appProps: Record<string, unknown> | undefined;
+    __appProps: Record<string, undefined>
   }
 }
 
-
-
-ApiRequestApp.fire();
+HonoApp.fire()
 
 addEventListener("scheduled", (event: ScheduledEvent) => {
   event.waitUntil(ScheduledEventHandler(event))

@@ -1,50 +1,97 @@
-import React from "react";
-import { ReactElement } from "react";
-import { MainComicPage } from "./pages/comic";
-import * as ReactDOMServer from "react-dom/server"
-import * as ReactDOMClient from "react-dom/client"
-import { Helmet } from "react-helmet";
-import { NotFoundPage } from "./pages/notFound";
-import { ServerErrorPage } from "./pages/serverError";
+import React from 'react'
+import { ReactElement } from 'react'
+import { MainComicPage } from './pages/comic'
+import * as ReactDOMServer from 'react-dom/server'
+import * as ReactDOMClient from 'react-dom/client'
+import { NotFoundPage } from './pages/notFound'
+import { ServerErrorPage } from './pages/serverError'
+import { ComicData } from '../api/xkcd'
 
-const routeRegistry: {[key: string]: React.FC<any>} = {
-    "^/[1-9][0-9]*/?$": MainComicPage,
-    "^/error404/?$": NotFoundPage,
-    "^/error500/?$": ServerErrorPage
+const routeRegistry: { [key: string]: [string, React.FC<any>] } = {
+  '^/[1-9][0-9]*/?$': ["comic", MainComicPage],
+  '^/error404/?$': ["404", NotFoundPage],
+  '^/error500/?$': ["500", ServerErrorPage],
 }
 
-const pathnameToComponent = (pathname: string): React.FC | null => {
-    let finalElement: null | React.FC = null
+const pathnameToComponent = (pathname: string): [string, React.FC] | null => {
+  let finalElement: null | [string, React.FC] = null
 
-    Object.entries(routeRegistry).forEach(([key, value]) => {
-        const rex = new RegExp(key);
-        const matches = rex.test(pathname);
+  Object.entries(routeRegistry).forEach(([key, value]) => {
+    const rex = new RegExp(key)
+    const matches = rex.test(pathname)
 
-        if (matches) {
-            finalElement = value
-        }
-    })
-
-    return finalElement
-}
-
-export const renderComponent = (url: string, componentProps: Record<string, unknown>) => {
-    const pathname = new URL(url).pathname
-    const Component = pathnameToComponent(pathname)
-
-    if (!Component) {
-        throw new Error("This path does not correspond to a page")
+    if (matches) {
+      finalElement = value
     }
+  })
 
-    const app = ReactDOMServer.renderToString(<Component {...componentProps} />);
-    const helmet = Helmet.renderStatic()
+  return finalElement
+}
 
-    const htmlattrs = helmet.htmlAttributes.toString();
-    const bodyattrs = helmet.bodyAttributes.toString();
+const generateHeaders = ([cType, Component]: [string, React.FC], props: Record<string, unknown>): string => {
+  switch (cType) {
+    case "404": {
+      return ReactDOMServer.renderToString(<>
+        <title>Page Not Found</title>
+      </>)
+      break;
+    }
+    case "500": {
+      return ReactDOMServer.renderToString(<>
+        <title>Internal Server Error</title>
+      </>)
+      break;
+    }
+    case "comic": {
+      const data = props as ComicData
 
-    const markup = `
+      return ReactDOMServer.renderToString(<>
+        <title>
+          {data.num}: {data.title}
+        </title>
+        <meta property="og:title" content={data.title} />
+        <meta property='og:type' content="website" />
+        <meta property='og:image' content={`https://xkcd.julianbuse.com/images/${data.num}`} />
+        <meta property='og:url' content={`https://xkcd.julianbuse.com/${data.num}`} />
+        <meta property='og:description' content={data.alt} />
+        <meta property='og:site_name' content='Random XKCD' />
+        <meta property='twitter:card' content='summary_large_image' />
+      </>)
+      break;
+    }
+    default: {
+      return ""
+      break;
+    }
+  }
+}
+
+export const renderComponent = (
+  url: string,
+  componentProps: Record<string, unknown>,
+) => {
+  const pathname = new URL(url).pathname
+  const componentQueryResult = pathnameToComponent(pathname)
+
+  if (!componentQueryResult) {
+    throw new Error('This path does not correspond to a page')
+  }
+
+  const [cType, Component] = componentQueryResult;
+
+  console.log('component found: ', Component.name)
+
+    const app = ReactDOMServer.renderToString(<Component {...componentProps} />)
+
+  console.log('app rendered')
+
+  console.log('helmet static rendered')
+
+  console.log('html and body attributed rendered')
+
+  const markup = `
     <!DOCTYPE html>
-    <html ${htmlattrs}>
+    <html>
         <head>
             <meta charset="UTF-8">
             <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
@@ -53,33 +100,35 @@ export const renderComponent = (url: string, componentProps: Record<string, unkn
             <link rel="manifest" href="/static/site.webmanifest">
             <link rel="stylesheet" href="static/normalize.css">
             <link rel="stylesheet" href="/static/index.css">
-            ${helmet.title.toString()}
-            ${helmet.meta.toString()}
-            ${helmet.link.toString()}
+            ${generateHeaders(componentQueryResult, componentProps)}
             <script>
                 window.__appProps = ${JSON.stringify(componentProps)}
             </script>
         </head>
-        <body ${bodyattrs}>
+        <body>
             <div id="root">${app}</div>
             <script src="/static/index.js"></script>
         </body>
     </html>
     `
 
-    return markup
+  console.log('rendered markup: ', markup)
+
+  return markup
 }
 
-if (typeof navigator !== "undefined" && typeof document !== "undefined" && typeof window !== "undefined" && typeof location !== "undefined") {
-    const pathname = location.pathname;
-    const Component = pathnameToComponent(pathname)
+if (typeof navigator !== 'undefined' && typeof document !== 'undefined') {
+  const pathname = location.pathname
+  const componentQueryResult = pathnameToComponent(pathname)
 
-    if (!Component) {
-        throw new Error("No Component For This Route")
-    }
+  if (!componentQueryResult) {
+    throw new Error('No Component For This Route')
+  }
 
-    const appProps = window.__appProps;
-    const root = document.querySelector("#root") as Element
+  const [cType, Component] = componentQueryResult
 
-    ReactDOMClient.hydrateRoot(root, <Component {...appProps} />)
+  const appProps = window.__appProps as Record<string, unknown>
+  const root = document.querySelector('#root') as Element
+
+  ReactDOMClient.hydrateRoot(root, <Component {...appProps} />)
 }
