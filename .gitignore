@@ -1,4 +1,6 @@
 dist
+css
+static
 node_modules
 transpiled
 /.idea/

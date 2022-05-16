@@ -1,8 +1,7 @@
 import * as cheerio from 'cheerio'
 import * as htmlparser2 from 'htmlparser2'
-import { generateHtml } from './html'
 
-const COMIC_PREFIX = 'COMIC7:'
+export const COMIC_PREFIX = 'COMIC7:'
 
 type XKCDApiResult = {
   num: number
@@ -172,6 +171,16 @@ export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
     }
   })
 
+  $('span').each(function() {
+    const span = $(this)
+    const spanclass = span.attr("class")
+
+    if (spanclass?.includes("mw-editsection")) {
+      span.remove()
+      return;
+    }
+  })
+
   const content = $('div.mw-parser-output > table').nextUntil('span#Discussion')
 
   $('*', content).each(function (i, elem) {
@@ -258,7 +267,7 @@ export const parseHtmlOfExplainer = async (html: string): Promise<string> => {
   return $.html(content)
 }
 
-type ComicData = {
+export type ComicData = {
   num: number
   title: string
   image: string
@@ -350,7 +359,7 @@ const saveComicData = async (comic: number, data: ComicData) => {
   await DATA.put(COMIC_PREFIX + comic.toString(), JSON.stringify(data))
 }
 
-const getComicData = async (comic: number) => {
+export const getComicData = async (comic: number) => {
   const data = (await DATA.get(
     `${COMIC_PREFIX}${comic}`,
     'json',
@@ -394,7 +403,7 @@ const getUnsortedListOfScrapedComics = async (
   }
 }
 
-const getAllScrapedComics = async (cursor?: string): Promise<string[]> => {
+export const getAllScrapedComics = async (): Promise<string[]> => {
   const list = await getUnsortedListOfScrapedComics()
   const sortedList = list.sort(
     (a, b) =>
@@ -460,161 +469,4 @@ export const getRandomScrapedComic = async (): Promise<number | null> => {
 
   const random = comics[Math.floor(Math.random() * comics.length)]
   return parseInt(random.replace(COMIC_PREFIX, ''))
-}
-
-export const generateComicPage = async (
-  comic: number,
-): Promise<string | null> => {
-  const data = await getComicData(comic)
-
-  if (!data) {
-    return null
-  }
-
-  return generateComicPageFromComicData(data)
-}
-
-export const generateComicPageFromComicData = (data: ComicData): string => {
-  return generateHtml(
-    `${data.num}: ${data.title}`,
-    `
-        .main {
-            margin-bottom: 17rem;
-        }
-
-        .comic, .explanation {
-          padding-left: 3rem;
-          padding-right: 3rem;
-        }
-
-        .header {
-          display: flex;
-          flex-dir: row;
-          width: "100vw";
-          padding: 3rem;
-          justify-content: space-between;
-        }
-
-        .main-header, .header-sub {
-            margin: 0;
-        }
-
-        .github-logo {
-          height: 6.5rem;
-          width: 6.5rem;
-        }
-
-        .github-logo:hover {
-          fill: white;
-        }
-
-        .comic-image {
-            width: 100%;
-            height: auto;
-            max-width: 1000px;
-        }
-
-        .random-comic-button-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-image: linear-gradient(0deg, black, black, black, transparent);
-            padding: 3rem;
-            padding-top: 15rem;
-            padding-bottom: 20rem;
-            margin-bottom: -15.5rem;
-            width: 100vw;
-        }
-
-        .random-comic-button {
-            background-color: white;
-            color: black;
-            padding: 1rem;
-            text-decoration: none;
-            font-size: 3.4rem;
-        }
-
-        .random-comic-button:link {
-            color: black;
-        }
-
-        .random-comic-button:visited {
-            color: black;
-        }
-
-        @media only screen and (min-width: 992px) {
-
-          .github-logo {
-            width: 3rem;
-            height: 3rem;
-          }
-
-            .random-comic-button-container {
-
-            }
-
-            .random-comic-button {
-                font-size: 1.6rem;
-            }
-
-            .main {
-                margin-bottom: 15rem;
-            }
-
-            .comic-image {
-                width: auto;
-            }
-        }
-        `,
-    `
-            <div class="main">
-                <div class="header">
-                  <div class="header-left">
-                    <h1 class="main-header">Random XKCD</h1>
-                    <h3 class="header-sub">by Julian Buse</h3>
-                  </div>
-                  <div class="header-right">
-                    <a href="https://github.com/JulianBuse/random-xkcd">
-                      <!--Github Logo-->
-                      <svg class="github-logo" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    </a>
-                  </div>
-                </div>
-                <br />
-                <div class="comic">
-                    <h3 class="comic-title">${data.num}: ${data.title}</h3>
-                    <img class="comic-image" src="${data.image}" alt="${
-      data.alt
-    }" />
-                    <p class="comic-alt">${data.alt}</p>
-                </div>
-                <br />
-                <div class="explanation">
-                    ${data.explanation || '<p>No Explanation Available</p>'}
-                </div>
-                <div class="random-comic-button-container">
-                    <a class="random-comic-button" href="/${
-                      data.num
-                    }/prev">Previous</a>
-                    <a class="random-comic-button" href="/">Random Comic</a>
-                    <a class="random-comic-button" href="/${
-                      data.num
-                    }/next">Next</a>
-                </div>
-            </div>
-        `,
-    {
-      opengraph: {
-        title: `${data.num}: ${data.title}`,
-        image: data.image,
-        url: `https://xkcd.julianbuse.com/${data.num}`,
-        description: data.alt,
-        site_name: 'Random XKCD by Julian Buse',
-      },
-      twitter: {
-        card_type: 'summary_large_image',
-      },
-    },
-  )
 }

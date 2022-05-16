@@ -1,195 +1,141 @@
-import { getXKCDData, createImageData, scrape, generateComicPageFromComicData } from './../api/xkcd';
-import { Router } from "itty-router"
-import { generateHtml, htmlResponse, htmlTestPage, internalServerErrorPage, notFoundPage } from "../api/html"
-import { generateComicPage, getExplainXkcdComicUrl, getImageData, getNextComic, getPreviousComic, getRandomScrapedComic, } from "../api/xkcd"
+import {
+  getXKCDData,
+  createImageData,
+  scrape,
+  getComicData,
+} from './../api/xkcd'
+import {
+  getExplainXkcdComicUrl,
+  getImageData,
+  getNextComic,
+  getPreviousComic,
+  getRandomScrapedComic,
+} from '../api/xkcd'
+import { Hono } from 'hono'
+import { serveStatic } from 'hono/serve-static'
+import { renderComponent } from './react'
 
-const router = Router()
+const app = new Hono()
 
-router.get("/css-test", async () => {
-    return htmlResponse(htmlTestPage())
+app.get('/', async (c) => {
+  const comic = await getRandomScrapedComic()
+
+  if (!comic) {
+    const data = await scrape()
+
+    if (data) {
+      return c.redirect(`/${data.num}`)
+    }
+
+    return c.redirect('/error404')
+  }
+
+  return c.redirect(`/${comic}`)
 })
 
-router.get("/", async (req) => {
-    const comic = await getRandomScrapedComic()
+app.get('/:comic', async (c) => {
+  const comic = parseInt(c.req.param('comic'))
 
-    const url = new URL(req.url)
+  if (!comic || comic !== comic) {
+    return c.redirect('/error404')
+  }
 
-    if (!comic) {
-        const data = await scrape()
+  let comicData = await getComicData(comic)
 
-        if (data) {
-            const html = generateComicPageFromComicData(data)
+  if (!comicData) {
+    console.log('comic data not present: scraping')
 
-            return htmlResponse(html)
-        }
+    const data = await scrape(comic)
 
-        return htmlResponse(notFoundPage(), 404)
+    console.log('data: ', data)
+
+    if (!data) {
+      return c.redirect('/error404')
     }
 
-    return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
+    comicData = data
+  }
+
+  const html = renderComponent(c.req.url, comicData)
+
+  return c.html(html)
 })
 
-router.get("/:comic", async (req) => {
+app.get('/images/:imageComic', async (c) => {
+  const comic = parseInt(c.req.param('imageComic'))
 
-    const params = req.params;
+  if (!comic || comic !== comic) {
+    return c.redirect('/error404')
+  }
 
-    if (!params) {
-        return htmlResponse(internalServerErrorPage(), 500)
-    }
+  const imageRes = await getImageData(comic.toString())
 
-    const comic = parseInt(params.comic);
+  if (imageRes !== null) {
+    return imageRes
+  }
 
-    if (!comic || comic !== comic) {
-        return htmlResponse(notFoundPage(), 404)
-    }
+  const xkcdData = await getXKCDData(comic)
 
-    const page = await generateComicPage(comic)
+  if (!xkcdData) {
+    return c.redirect('/error404')
+  }
 
-    if (!page) {
+  const id = await createImageData(xkcdData.img, comic.toString())
+  const response = await fetch(xkcdData.img)
 
-        const data = await scrape(comic)
-
-
-        if (!data) {
-            return htmlResponse(notFoundPage(), 404)
-        }
-
-        const pageHtml = generateComicPageFromComicData(data)
-
-        return htmlResponse(pageHtml)
-    }
-
-    return htmlResponse(page)
+  return response
 })
 
-router.get("/images/:comic", async (req) => {
-    const params = req.params;
+app.get('/:comic/next', async (c) => {
+  const comic = parseInt(c.req.param('comic'))
 
-    if (!params) {
-        return htmlResponse(internalServerErrorPage(), 500)
-    }
+  if (!comic || comic !== comic) {
+    return c.redirect('/error404')
+  }
 
-    const comic = parseInt(params.comic);
+  const page = await getNextComic(comic)
 
-    if (!comic || comic !== comic) {
-        return htmlResponse(notFoundPage(), 404)
-    }
+  if (!page) {
+    return c.redirect(`/${comic}`)
+  }
 
-    const imageRes = await getImageData(comic.toString())
-
-    if (imageRes !== null) {
-        return imageRes
-    }
-
-    const xkcdData = await getXKCDData(comic)
-    
-    if (!xkcdData) {
-        return htmlResponse(notFoundPage(), 404)
-    }
-
-    const id = await createImageData(xkcdData.img, comic.toString());
-    const response = await fetch(xkcdData.img);
-
-    return response;
+  return c.redirect(`/${page}`)
 })
 
-/*
-router.get("/:comic/image", async (req) => {
-    const params = req.params;
+app.get('/:comic/prev', async (c) => {
+  const comic = parseInt(c.req.param('comic'))
 
-    if (!params) {
-        return htmlResponse(internalServerErrorPage(), 500)
-    }
+  if (!comic || comic !== comic) {
+    return c.redirect('/error404')
+  }
 
-    const comic = parseInt(params.comic)
+  const page = await getPreviousComic(comic)
 
-    if (!comic || comic !== comic) {
-        return htmlResponse(notFoundPage(), 404)
-    }
+  if (!page) {
+    return c.redirect(`/${comic}`)
+  }
 
-    const response = await getXKCDImage(comic)
-
-    if (!response) {
-        return htmlResponse(notFoundPage(), 404)
-    }
-
-    return response
-})
-*/
-
-router.get("/:comic/next", async (req) => {
-    const params = req.params;
-    
-    if (!params) {
-        return htmlResponse(await internalServerErrorPage(), 500)
-    }
-
-    const comic = parseInt(params.comic)
-
-    if (!comic || comic !== comic) {
-        return htmlResponse(notFoundPage(), 404)
-    }
-
-    const page = await getNextComic(comic)
-
-    const url = new URL(req.url)
-
-    if (!page) {
-        return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
-    }
-
-    return Response.redirect(`${url.protocol}//${url.host}/${page}`)
+  return c.redirect(`/${page}`)
 })
 
-router.get("/:comic/prev", async (req) => {
-    const params = req.params;
-    
-    if (!params) {
-        return htmlResponse(internalServerErrorPage(), 500)
-    }
+app.use('/static/*', serveStatic({ root: './' }))
 
-    const comic = parseInt(params.comic)
+app.get('/error404', async (c) => {
+  const html = renderComponent(c.req.url, {})
 
-    if (!comic || comic !== comic) {
-        return htmlResponse(notFoundPage(), 404)
-    }
-
-    const page = await getPreviousComic(comic)
-
-    const url = new URL(req.url)
-
-    if (!page) {
-        return Response.redirect(`${url.protocol}//${url.host}/${comic}`)
-    }
-
-    return Response.redirect(`${url.protocol}//${url.host}/${page}`)
+  return c.html(html)
 })
 
-/*
-router.get("/scrape", async () => {
-    await scrape();
+app.get('/error500', async (c) => {
+  const html = renderComponent(c.req.url, {})
 
-    return new Response("Scraped")
+  return c.html(html)
 })
 
-router.get("/scrape/:comic", async ({params}) => {
+app.onError((err, c) => c.redirect('/error500'))
 
-    if (!params) {
-        throw new Error()
-    }
+app.notFound((c) => c.redirect('/error404'))
 
-    await scrape(parseInt((params).comic as string))
+const ApiRequestApp = app
 
-    return new Response("Scraped")
-})
-*/
-
-router.all("*", () => htmlResponse(notFoundPage(), 404))
-
-const handle = async (event: FetchEvent): Promise<Response> => {
-    return router.handle(event.request)
-}
-
-const ApiRequestHandle = handle
-
-export default ApiRequestHandle
+export default ApiRequestApp

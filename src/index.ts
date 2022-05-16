@@ -1,14 +1,17 @@
 import ScheduledEventHandler from "./api"
-import ApiRequestHandle from "./web"
+import ApiRequestApp from "./web"
 
 declare global {
-  const DATA: KVNamespace
+  const DATA: KVNamespace;
+  interface Window {
+    __appProps: Record<string, unknown> | undefined;
+  }
 }
 
-addEventListener('fetch', (event) => {
-  event.respondWith(ApiRequestHandle(event))
-})
 
-addEventListener("scheduled", event => {
+
+ApiRequestApp.fire();
+
+addEventListener("scheduled", (event: ScheduledEvent) => {
   event.waitUntil(ScheduledEventHandler(event))
 })

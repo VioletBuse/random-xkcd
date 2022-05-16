@@ -4,12 +4,15 @@
   "description": "Cloudflare worker TypeScript template",
   "main": "dist/worker.js",
   "scripts": {
-    "build": "esbuild --bundle src/index.ts --outfile=dist/worker.js",
+    "build:js": "esbuild --minify --bundle --sourcemap src/index.ts --outfile=dist/index.js",
+    "build:css": "sass ./src/scss/index.scss ./css/index.css",
+    "build:delete": "rimraf dist css static",
+    "build:copy:static": "mkdir static && cd static && mkdir static && cd .. && cp -a ./dist/. ./static/static/ && cp -a ./css/. ./static/static/ && cp -a ./favicons/. ./static/static && cp ./normalize.css ./static/static/normalize.css",
+    "build": "npm run build:delete && npm run build:js && npm run build:css && npm run build:copy:static",
     "format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "test": "jest --config jestconfig.json --verbose",
-    "dev": "miniflare --watch",
-    "start": "miniflare",
+    "dev": "wrangler dev -l",
     "scheduled": "curl \"http://localhost:8787/cdn-cgi/mf/scheduled?cron=*+*+*+*+*\""
   },
   "author": "author",
@@ -24,6 +27,9 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
     "@types/jest": "^26.0.23",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.4",
+    "@types/react-helmet": "^6.1.5",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
@@ -33,6 +39,8 @@
     "jest": "^27.0.1",
     "miniflare": "^2.4.0",
     "prettier": "^2.3.0",
+    "rimraf": "^3.0.2",
+    "sass": "^1.51.0",
     "service-worker-mock": "^2.0.5",
     "ts-jest": "^27.0.1",
     "ts-loader": "^9.2.2",
@@ -43,7 +51,11 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.10",
     "esbuild": "^0.14.38",
+    "hono": "^1.2.2",
     "htmlparser2": "^8.0.1",
-    "itty-router": "^2.6.1"
+    "itty-router": "^2.6.1",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-helmet": "^6.1.0"
   }
 }

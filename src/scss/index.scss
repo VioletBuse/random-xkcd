@@ -1,0 +1,297 @@
+$color-50: #f2f2f2;
+$color-100: #d9d9d9;
+$color-200: #bfbfbf;
+$color-300: #a6a6a6;
+$color-400: #8c8c8c;
+$color-500: #737373;
+$color-600: #595959;
+$color-700: #404040;
+$color-800: #262626;
+$color-900: #0d0d0d;
+$desktop-breakpoint: 992px;
+
+html,
+body {
+  background-color: $color-800;
+  color: $color-50;
+  font-family: monospace;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+svg {
+  color: #cdcdcd;
+  fill: #cdcdcd;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100vw;
+}
+
+img {
+  max-width: 100vw;
+}
+
+a:link {
+  color: #cdcdcd;
+}
+
+a:visited {
+  color: #cdcdcd;
+}
+
+table {
+  border-collapse: collapse;
+  /*overflow-x: auto;*/
+}
+
+table,
+td,
+th {
+  border: 1px solid;
+}
+
+td,
+th {
+  padding: 10px;
+}
+
+h1 {
+  font-size: 5.5rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.75rem;
+  }
+}
+
+h2 {
+  font-size: 5rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.7rem;
+  }
+}
+
+h3 {
+  font-size: 4.5rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.65rem;
+  }
+}
+
+h4 {
+  font-size: 4.1rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.5rem;
+  }
+}
+
+h5 {
+  font-size: 3.6rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.4rem;
+  }
+}
+
+h6 {
+  font-size: 3.3rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.3rem;
+  }
+}
+
+p,
+li,
+a,
+dt,
+dl,
+summary,
+address,
+th,
+td,
+caption,
+pre {
+  font-size: 3rem;
+  @media only screen and (min-width: $desktop-breakpoint) {
+    font-size: 1.3rem;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+li,
+a,
+dt,
+dl,
+summary,
+address,
+th,
+td,
+caption,
+pre {
+  overflow-wrap: break-word;
+}
+
+pre {
+  white-space: pre-wrap;
+  /*overflow-x: auto;*/
+}
+
+.main-comic-page {
+
+    margin-bottom: 17rem;
+
+    @media only screen and (min-width: $desktop-breakpoint) {
+        margin-bottom: 10rem;
+    }
+
+  .comic-header-container {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: $color-900;
+    padding: 1rem 3rem 1rem 3rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    @media only screen and (min-width: $desktop-breakpoint) {
+    }
+
+    .left {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      .name {
+        h1 {
+          color: $color-300;
+        }
+
+        h3 {
+          color: $color-200;
+
+          a {
+            text-decoration: none;
+            color: white;
+          }
+        }
+
+        .top {
+          font-size: 5rem;
+          @media only screen and (min-width: $desktop-breakpoint) {
+            font-size: 1.5rem;
+          }
+        }
+
+        .bottom {
+          font-size: 3rem;
+          @media only screen and (min-width: $desktop-breakpoint) {
+            font-size: 1.2rem;
+          }
+        }
+      }
+    }
+
+    .right {
+      .github-icon {
+        width: 7rem;
+        height: 7rem;
+        @media only screen and (min-width: $desktop-breakpoint) {
+          width: 2.6rem;
+          height: 2.6rem;
+        }
+
+        &:hover {
+          fill: white;
+        }
+      }
+    }
+  }
+
+  .comic-main-container {
+    padding: 1rem 3rem 1rem 3rem;
+
+    .title {
+      margin-bottom: 1rem;
+    }
+
+    .image {
+      width: 100%;
+      height: auto;
+
+      @media only screen and (min-width: $desktop-breakpoint) {
+        width: auto;
+        height: auto;
+      }
+
+    }
+
+    .alt {
+      margin-top: 1rem;
+    }
+  }
+
+  .comic-explanation-container {
+    padding: 1rem 3rem 1rem 3rem;
+
+    h1, h2, h3 {
+        margin-bottom: 2rem;
+        margin-top: 2rem;
+    }
+  }
+
+  .comic-buttons {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-image: linear-gradient(0deg, black, black, black, transparent);
+    padding: 3rem;
+    padding-top: 15rem;
+    padding-bottom: 20rem;
+    margin-bottom: -15.5rem;
+    width: 100vw;
+
+    @media only screen and (min-width: $desktop-breakpoint) {
+        padding: 1rem;
+        padding-left: 3rem;
+        padding-top: 10rem;
+        padding-bottom: 15rem;
+        margin-bottom: -13rem;
+    }
+
+    a {
+      background-color: white;
+      color: black;
+      padding: 1rem;
+      text-decoration: none;
+      font-size: 3.4rem;
+      margin-right: 1rem;
+
+      &:link,
+      &:visited {
+        color: black;
+      }
+
+      @media only screen and (min-width: $desktop-breakpoint) {
+        font-size: 1rem;
+        padding: 0.7rem;
+      }
+    }
+  }
+}
