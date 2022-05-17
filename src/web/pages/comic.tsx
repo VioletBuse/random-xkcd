@@ -33,7 +33,7 @@ export const MainComicPage = (props: ComicData) => {
         </div>
       </div>
       <div className="comic-main-container">
-        <h3 className="title">{props.title}</h3>
+        <h3 className="title">{props.num}: {props.title}</h3>
         <img className="image" src={'/images/' + props.num} alt={props.alt} />
         <p className="alt">{props.alt}</p>
       </div>
