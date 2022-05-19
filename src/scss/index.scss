@@ -17,6 +17,11 @@ body {
   font-family: monospace;
 }
 
+ * {
+   text-overflow: ellipsis;
+   word-break: break-all;
+ }
+
 h1,
 h2,
 h3,
