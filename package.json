@@ -12,7 +12,8 @@
     "format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "dev": "wrangler dev -l",
-    "scheduled": "curl \"http://localhost:8787/cdn-cgi/mf/scheduled?cron=*+*+*+*+*\""
+    "scheduled": "curl \"http://localhost:8787/cdn-cgi/mf/scheduled?cron=*+*+*+*+*\"",
+    "lighthouse": "lighthouse http://localhost:8787 -GA --output=json"
   },
   "author": "author",
   "license": "MIT OR Apache-2.0",
@@ -35,6 +36,7 @@
     "eslint-config-prettier": "^8.1.0",
     "eslint-config-typescript": "^3.0.0",
     "jest": "^27.0.1",
+    "lighthouse": "^9.6.1",
     "miniflare": "^2.4.0",
     "prettier": "^2.3.0",
     "rimraf": "^3.0.2",

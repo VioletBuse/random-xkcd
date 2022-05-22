@@ -34,6 +34,13 @@ app.get('/', async (c) => {
   return c.redirect(`/${comic}`)
 })
 
+app.get("/robots.txt", c => {
+  return c.text(`
+  User-agent: *
+  Allow: *
+  `)
+})
+
 app.get('/:comic', async (c) => {
   const comic = parseInt(c.req.param('comic'))
 

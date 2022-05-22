@@ -5,3 +5,4 @@ node_modules
 transpiled
 /.idea/
 wrangler.toml
+latest-run
