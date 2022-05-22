@@ -175,7 +175,7 @@ pre {
     left: 0;
     right: 0;
     background-color: $color-900;
-    padding: 1rem 3rem 1rem 3rem;
+    padding: 1rem 1rem 1rem 1rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -240,7 +240,7 @@ pre {
   }
 
   .comic-main-container {
-    padding: 1rem 3rem 1rem 3rem;
+    padding: 1rem 1rem 1rem 1rem;
 
     .title {
       margin-bottom: 1rem;
@@ -263,7 +263,7 @@ pre {
   }
 
   .comic-explanation-container {
-    padding: 1rem 3rem 1rem 3rem;
+    padding: 1rem 1rem 1rem 1rem;
 
     h1,
     h2,
@@ -284,7 +284,7 @@ pre {
     // padding-bottom: 20rem;
     // margin-bottom: -15.5rem;
     padding: 1rem;
-    padding-left: 3rem;
+    padding-left: 1rem;
     padding-top: 10rem;
     padding-bottom: 15rem;
     margin-bottom: -13rem;
@@ -292,7 +292,7 @@ pre {
 
     @media only screen and (min-width: $desktop-breakpoint) {
       padding: 1rem;
-      padding-left: 3rem;
+      padding-left: 1rem;
       padding-top: 10rem;
       padding-bottom: 15rem;
       margin-bottom: -13rem;
